@@ -7,14 +7,14 @@ dnl without editing.
 
 dnl If your extension references something external, use with:
 
-dnl PHP_ARG_WITH(ant, for ant support,
-dnl Make sure that the comment is aligned:
-dnl [  --with-ant             Include ant support])
+PHP_ARG_WITH(ant, for ant support,
+Make sure that the comment is aligned:
+[  --with-ant             Include ant support])
 
 dnl Otherwise use enable:
 
 PHP_ARG_ENABLE(ant, whether to enable ant support,
-dnl Make sure that the comment is aligned:
+Make sure that the comment is aligned:
 [  --enable-ant           Enable ant support])
 
 if test "$PHP_ANT" != "no"; then
@@ -77,5 +77,6 @@ if test "$PHP_ANT" != "no"; then
   dnl
   dnl PHP_SUBST(ANT_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(ant, ant.c, $ext_shared,, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+  dnl PHP_NEW_EXTENSION(ant, ant.c, $ext_shared,, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+  PHP_NEW_EXTENSION(ant, ant.c, $ext_shared)
 fi

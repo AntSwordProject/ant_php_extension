@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
+  | PHP Version 5, 7                                                     |
   +----------------------------------------------------------------------+
   | Copyright (c) 1997-2018 The PHP Group                                |
   +----------------------------------------------------------------------+
@@ -12,7 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: github.com/antswordproject                                   |
   +----------------------------------------------------------------------+
 */
 
@@ -38,6 +38,15 @@ extern zend_module_entry ant_module_entry;
 #include "TSRM.h"
 #endif
 
+PHP_MINIT_FUNCTION(ant);
+PHP_MSHUTDOWN_FUNCTION(ant);
+PHP_RINIT_FUNCTION(ant);
+PHP_RSHUTDOWN_FUNCTION(ant);
+PHP_MINFO_FUNCTION(ant);
+
+PHP_FUNCTION(confirm_ant_compiled);
+PHP_FUNCTION(antsystem); /* php system */
+
 /*
   	Declare any global variables you may need between the BEGIN
 	and END macros here:
@@ -47,7 +56,7 @@ ZEND_BEGIN_MODULE_GLOBALS(ant)
 	char *global_string;
 ZEND_END_MODULE_GLOBALS(ant)
 */
-
+#if PHP_MAJOR_VERSION == 7
 /* Always refer to the globals in your function as ANT_G(variable).
    You are encouraged to rename these macros something shorter, see
    examples in any other php module directory.
@@ -57,6 +66,18 @@ ZEND_END_MODULE_GLOBALS(ant)
 #if defined(ZTS) && defined(COMPILE_DL_ANT)
 ZEND_TSRMLS_CACHE_EXTERN()
 #endif
+
+#elif PHP_MAJOR_VERSION == 5
+
+#ifdef ZTS
+#define ANT_G(v) TSRMG(ant_globals_id, zend_ant_globals *, v)
+#else
+#define ANT_G(v) (ant_globals.v)
+#endif
+
+#else /* PHP_MAJOR_VERSION */
+
+#endif /* PHP_MAJOR_VERSION */
 
 #endif	/* PHP_ANT_H */
 
