@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 5, 7                                                     |
+  | PHP Version 5, 7, 8                                                  |
   +----------------------------------------------------------------------+
   | Copyright (c) 1997-2018 The PHP Group                                |
   +----------------------------------------------------------------------+
@@ -56,7 +56,7 @@ ZEND_BEGIN_MODULE_GLOBALS(ant)
 	char *global_string;
 ZEND_END_MODULE_GLOBALS(ant)
 */
-#if PHP_MAJOR_VERSION == 7
+#if PHP_MAJOR_VERSION == 7 || PHP_MAJOR_VERSION == 8
 /* Always refer to the globals in your function as ANT_G(variable).
    You are encouraged to rename these macros something shorter, see
    examples in any other php module directory.
@@ -80,6 +80,17 @@ ZEND_TSRMLS_CACHE_EXTERN()
 #endif /* PHP_MAJOR_VERSION */
 
 #endif	/* PHP_ANT_H */
+
+/* 兼容php5-8 */
+#if PHP_MAJOR_VERSION == 8
+#define TSRMLS_CC
+#endif
+
+#if PHP_MAJOR_VERSION == 5
+#define ant_num_type int
+#else
+#define ant_num_type size_t
+#endif
 
 /*
  * Local variables:

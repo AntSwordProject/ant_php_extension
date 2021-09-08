@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 5, 7                                                        |
+  | PHP Version 5, 7, 8                                                  |
   +----------------------------------------------------------------------+
   | Copyright (c) 1997-2018 The PHP Group                                |
   +----------------------------------------------------------------------+
@@ -38,16 +38,20 @@ static int le_ant;
 /* {{{ ext/standard/basic_functions.c for exec.c */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_system, 0, 0, 1)
     ZEND_ARG_INFO(0, command)
-    ZEND_ARG_INFO(1, return_value)
 ZEND_END_ARG_INFO()
 /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_compile, 0, 0, 1)
+    ZEND_ARG_INFO(0, data)
+ZEND_END_ARG_INFO()
+
 
 /* {{{ ant_functions[]
  *
  * Every user visible function must have an entry in ant_functions[].
  */
 const zend_function_entry ant_functions[] = {
-    PHP_FE(confirm_ant_compiled,    NULL)       /* For testing, remove later. */
+    PHP_FE(confirm_ant_compiled,    arginfo_compile)       /* For testing, remove later. */
     PHP_FE(antsystem,               arginfo_system)
     PHP_FE_END  /* Must be the last line in ant_functions[] */
 };
@@ -92,7 +96,7 @@ PHP_INI_END()
    Return a string to confirm that the module is compiled in */
 PHP_FUNCTION(confirm_ant_compiled)
 {
-#if PHP_MAJOR_VERSION == 7
+#if PHP_MAJOR_VERSION == 7 || PHP_MAJOR_VERSION == 8
     char *arg = NULL;
     size_t arg_len, len;
     zend_string *strg;
@@ -122,82 +126,34 @@ PHP_FUNCTION(confirm_ant_compiled)
 /* }}} */
 
 
-static void ant_php_exec_ex(INTERNAL_FUNCTION_PARAMETERS, int mode) /* {{{ */
+static void ant_system(INTERNAL_FUNCTION_PARAMETERS)
 {
-    char *cmd;
-    zval *ret_code=NULL, *ret_array=NULL;
+    char *cmd="";
+    ant_num_type cmd_len;
     int ret;
-#if PHP_MAJOR_VERSION == 5
-    int cmd_len;
 
-    if (mode) {
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z/", &cmd, &cmd_len, &ret_code) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cmd, &cmd_len) == FAILURE) {
             RETURN_FALSE;
-        }
-    } else {
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z/z/", &cmd, &cmd_len, &ret_array, &ret_code) == FAILURE) {
-            RETURN_FALSE;
-        }
     }
+
     if (!cmd_len) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot execute a blank command");
         RETURN_FALSE;
     }
-    if (!ret_array) {
-        ret = php_exec(mode, cmd, NULL, return_value TSRMLS_CC);
-    } else {
-        if (Z_TYPE_P(ret_array) != IS_ARRAY) {
-            zval_dtor(ret_array);
-            array_init(ret_array);
-        }
-        ret = php_exec(2, cmd, ret_array, return_value TSRMLS_CC);
-    }
-#elif PHP_MAJOR_VERSION == 7
 
-    size_t cmd_len;
+    /* call the system function directly */
+    ret = php_exec(1, cmd, NULL, return_value TSRMLS_CC);
 
-    ZEND_PARSE_PARAMETERS_START(1, (mode ? 2 : 3))
-        Z_PARAM_STRING(cmd, cmd_len)
-        Z_PARAM_OPTIONAL
-        if (!mode) {
-            Z_PARAM_ZVAL_DEREF(ret_array)
-        }
-        Z_PARAM_ZVAL_DEREF(ret_code)
-    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+    /* set the status code into return value */
+    RETURN_LONG(ret);
+}
 
-    if (!cmd_len) {
-        php_error_docref(NULL, E_WARNING, "Cannot execute a blank command");
-        RETURN_FALSE;
-    }
-    if (strlen(cmd) != cmd_len) {
-        php_error_docref(NULL, E_WARNING, "NULL byte detected. Possible attack");
-        RETURN_FALSE;
-    }
-    if (!ret_array) {
-        ret = php_exec(mode, cmd, NULL, return_value);
-    } else {
-        if (Z_TYPE_P(ret_array) != IS_ARRAY) {
-            zval_ptr_dtor(ret_array);
-            array_init(ret_array);
-        } else if (Z_REFCOUNT_P(ret_array) > 1) {
-            zval_ptr_dtor(ret_array);
-            ZVAL_ARR(ret_array, zend_array_dup(Z_ARR_P(ret_array)));
-        }
-        ret = php_exec(2, cmd, ret_array, return_value);
-    }
-#endif
-    if (ret_code) {
-        zval_ptr_dtor(ret_code);
-        ZVAL_LONG(ret_code, ret);
-    }
-};
-/* }}} */
 
 /* {{{ proto int antsystem(string command [, int &return_value])
    Execute an external program and display output */
 PHP_FUNCTION(antsystem)
 {
-    ant_php_exec_ex(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+    ant_system(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 };
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
